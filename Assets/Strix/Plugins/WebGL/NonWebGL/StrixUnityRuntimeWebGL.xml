@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>StrixUnityRuntimeWebGL</name>
+    </assembly>
+    <members>
+        <member name="T:SoftGear.Strix.Unity.Runtime.WebGL.WebSocketProcessor">
+            <summary>
+            Dummy implementation of the WebSocketProcessor class.
+            Used for non-WebGL builds.
+            </summary>
+        </member>
+    </members>
+</doc>

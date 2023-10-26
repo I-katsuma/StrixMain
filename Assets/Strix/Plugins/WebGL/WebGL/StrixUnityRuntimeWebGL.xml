@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>StrixUnityRuntimeWebGL</name>
+    </assembly>
+    <members>
+        <member name="F:SoftGear.Strix.Unity.Runtime.WebGL.WebSocketStatus.Connecting">
+            <summary>Socket has been created. The connection is not yet open.</summary>
+        </member>
+        <member name="F:SoftGear.Strix.Unity.Runtime.WebGL.WebSocketStatus.Open">
+            <summary>The connection is open and ready to communicate.</summary>
+        </member>
+        <member name="F:SoftGear.Strix.Unity.Runtime.WebGL.WebSocketStatus.Closing">
+            <summary>The connection is in the process of closing.</summary>
+        </member>
+        <member name="F:SoftGear.Strix.Unity.Runtime.WebGL.WebSocketStatus.Closed">
+            <summary>The connection is closed or couldn't be opened.</summary>
+        </member>
+        <member name="T:SoftGear.Strix.Unity.Runtime.WebGL.WebSocketChannel.SimpleArrayBuffer">
+            <summary>
+            An ad-hoc private implementation of <see cref="T:SoftGear.Strix.Net.Buffer.IBuffer"/> used to buffer incoming
+            and outgoing messages in WebGL builds.
+            Since <see cref="T:SoftGear.Strix.Net.Buffer.ListBuffer"/> stores data in multiple chunks
+            and browser's WebSocket API can only accept a single buffer,
+            using <see cref="T:SoftGear.Strix.Net.Buffer.ListBuffer"/> requires merging data from chunks to another buffer
+            before sending.
+            Also, since WebGL builds are single-threaded,
+            buffer implementation can be simplified even further.
+            </summary>
+        </member>
+        <member name="T:SoftGear.Strix.Unity.Runtime.WebGL.WebSocketProcessor">
+            <summary>
+            Used to create WebSocket channel for Unity WebGL builds.
+            </summary>
+        </member>
+        <member name="M:SoftGear.Strix.Unity.Runtime.WebGL.WebSocketProcessor.Connect(SoftGear.Strix.Net.Channel.SocketChannelConfig,SoftGear.Strix.Net.Channel.ISocketChannelListener)">
+             <summary>
+            
+             </summary>
+             <param name="config"></param>
+             <param name="listener"></param>
+             <returns></returns>
+        </member>
+    </members>
+</doc>
