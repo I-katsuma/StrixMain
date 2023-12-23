@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 手裏剣ｸﾗｽ
 /// </summary>
-public class KartItemBullet : KartItem 
+public class KartItemBullet : KartItem
 {
     protected override void PostSetup()
     {
@@ -26,42 +26,42 @@ public class KartItemBullet : KartItem
     {
         // アイテムが発射されて何秒経過したか
         float pastTime = pastTimeF;
-
+        // 10秒経ったら弾が消える
+        if (pastTime >= 10.0f && _ownerId == KartPlayer.localPlayer.id) // ⇦自分自身が発射した弾かどうか
+        {
+            // 時間がたった弾を消す
+            DestroyItem();
+        }
         transform.position = _usePosition + pastTime * _useVelocity;
 
-        /*
-        // 10秒経ったら弾が消える
-        if(pastTime >= 10.0f)
-        {
-
-        }
-        */
     }
 
-    /*
+
     private void OnTriggerEnter(Collider other)
     {
-        KartPlayer otherPlayer = null;
+        KartPlayer otherPlayer = KartPlayer.GetPlayerByGameObject(other.gameObject);
+
         if(otherPlayer == null)
         {
             if(_ownerId == KartPlayer.localPlayer.id)
             {
+                // 壁などに当たった弾を消す
+                DestroyItem();
+            }
+            else if(otherPlayer == KartPlayer.localPlayer)
+            {
+                // 自分自身が発射した弾には一定時間当たらない
+                if(_ownerId == KartPlayer.localPlayer.id && pastTimeF < 0.5f)// 自分自身が発射した弾かどうか
+                {
+                    return;
+                }
+
+                // 自分に当たった球を消す
                 DestroyItem();
             }
         }
-        else if(otherPlayer == KartPlayer.localPlayer) 
-        { 
-            if(_oenerId == KartPlayer.localPlayer.id. && pastTimeF < 0.5f)
-            {
-                return;
-            }
 
-            // 弾に当たったらクラッシュ
-            otherPlayer.StartCrash();
 
-            // 自分に当たったら弾を消す
-            DestroyItem();
-        }
     }
-    */
+
 }

@@ -58,7 +58,7 @@ public class KartPlayer : StrixBehaviour
 
     // どのキャラクターを選択したかを示す
     [StrixSyncField] private int _syncSelectedAvatartIndex = 0;
-    public int syncSelectedAvatarIndex { set { _syncSelectedAvatartIndex = value;  }} // セットプロパティ
+    public int syncSelectedAvatarIndex { set { _syncSelectedAvatartIndex = value; } } // セットプロパティ
 
     // プレイヤー全体管理
     private static List<KartPlayer> _playerList = new List<KartPlayer>();
@@ -66,11 +66,15 @@ public class KartPlayer : StrixBehaviour
     private static KartPlayer _localPlayer = null;
     public static KartPlayer localPlayer => _localPlayer;
     
+    private static Dictionary<long, KartPlayer> _playerDicById = new Dictionary<long, KartPlayer>();
+    private static Dictionary<GameObject, KartPlayer> _playerDicByGameObject = new Dictionary<GameObject, KartPlayer>();
+
+
     /// <summary>
     /// プレイヤーの最小ステートを求める  (1人だけでも準備になってなかったらデフォルトを返す)
     /// </summary>
     /// <returns></returns>
-    public static int GetMinState ()
+    public static int GetMinState()
     {
         int minState = (int)KartTask.eState.Max;
         foreach (var p in _playerList)
@@ -94,11 +98,11 @@ public class KartPlayer : StrixBehaviour
             // ゴールしてる場合はゴールタイムがちいさい方が上
             // ゴールしてない場合の方が順位が下
             // ゴールしてない場合は周回数が大きい方が上
-           int scoreA = (a._syncGoalTimMsec > 0) ? (int.MaxValue - a._syncGoalTimMsec) : (int)(a._syncLapCountRatio * 10000.0f); // Aのスコア
-           int scoreB = (b._syncGoalTimMsec > 0) ? (int.MaxValue - b._syncGoalTimMsec) : (int)(b._syncLapCountRatio * 10000.0f); // Bのスコア
+            int scoreA = (a._syncGoalTimMsec > 0) ? (int.MaxValue - a._syncGoalTimMsec) : (int)(a._syncLapCountRatio * 10000.0f); // Aのスコア
+            int scoreB = (b._syncGoalTimMsec > 0) ? (int.MaxValue - b._syncGoalTimMsec) : (int)(b._syncLapCountRatio * 10000.0f); // Bのスコア
             return scoreB - scoreA; // スコアの降順で並ぶ
         });
-        return playerListSortedByRank[Mathf.Clamp(rank -1, 0, playerListSortedByRank.Count -1)];
+        return playerListSortedByRank[Mathf.Clamp(rank - 1, 0, playerListSortedByRank.Count - 1)];
     }
 
     private static void SortPlayerList()
@@ -117,9 +121,28 @@ public class KartPlayer : StrixBehaviour
             }
             return 0;
         });
+
+        // Dic
+        _playerDicById.Clear();
+        _playerDicByGameObject.Clear();
+        foreach (var p in _playerList)
+        {
+            _playerDicById.Add(p.id, p);
+            _playerDicByGameObject.Add(p.gameObject, p);
+        }
     }
 
-    //プレイヤーUtil 
+    public static KartPlayer GetPlayerByGameObject(GameObject go)
+    {
+        if(_playerDicByGameObject.ContainsKey(go))
+        {
+            return _playerDicByGameObject[go];
+        }
+        return null;
+    }
+
+    //プレイヤーUtil
+    public long id => strixReplicator.roomMember.GetPrimaryKey();
 
 
 
@@ -134,13 +157,13 @@ public class KartPlayer : StrixBehaviour
         SortPlayerList();
 
         // UI
-        if(_nameText != null)
+        if (_nameText != null)
         {
             GameObject.Destroy(_nameText.gameObject);
         }
 
         //UI
-        if(_nameText != null)
+        if (_nameText != null)
         {
             GameObject.Destroy(_nameText.gameObject);
         }
@@ -157,7 +180,7 @@ public class KartPlayer : StrixBehaviour
         _playerList.Add(this);
         SortPlayerList();
 
-        if(!isLocal)
+        if (!isLocal)
         {
             // 他人の場合は物理挙動を無効化
             myRigidBody.isKinematic = true;
@@ -176,7 +199,7 @@ public class KartPlayer : StrixBehaviour
             _nameText.transform.localPosition = Vector3.zero;
             _nameText.text = strixReplicator.roomMember.GetName();
         }
-        
+
     }
 
 
@@ -205,7 +228,7 @@ public class KartPlayer : StrixBehaviour
             }
 
             // アイテム関係
-            if(Input.GetKeyDown(KeyCode.Z))
+            if (Input.GetKeyDown(KeyCode.Z))
             {
                 UseItem(KartItem.eType.Bullet);
             }
@@ -229,7 +252,7 @@ public class KartPlayer : StrixBehaviour
             // Vector3.Dotは2つのベクトル内積の角を求める 　カートの位置からカメラの位置を引いている
             float dot = Vector3.Dot(cameraTransform.forward, kartPos - cameraTransform.position);
 
-            if(dot > 0.0f)
+            if (dot > 0.0f)
             {
                 // カメラよりもカートが前にいる
                 _nameText.gameObject.SetActive(true);
@@ -274,7 +297,7 @@ public class KartPlayer : StrixBehaviour
         }
 
         // ここから下はレース準備中は行わない
-        if(_syncState == (int)KartTask.eState.Ready)
+        if (_syncState == (int)KartTask.eState.Ready)
         {
             // Camera
             UpdateCamera();
@@ -295,7 +318,7 @@ public class KartPlayer : StrixBehaviour
         // 壁からの力の判定
         Vector3 velocity = myRigidBody.velocity;
         velocity.y = 0.0f; // Yゼロに
-        if(CheckNearlyEqual( _mixedVelocity.x, velocity.x) && CheckNearlyEqual(_mixedVelocity.z, velocity.z))
+        if (CheckNearlyEqual(_mixedVelocity.x, velocity.x) && CheckNearlyEqual(_mixedVelocity.z, velocity.z))
         {
             //　壁から何も力を受けてない
 
@@ -306,7 +329,7 @@ public class KartPlayer : StrixBehaviour
             Vector3 diff = velocity - _mixedVelocity;
             Vector3 diffN = diff.normalized;
             float diffM = diff.magnitude;
-            _forceVelocity = 4.0f * Mathf.Sqrt(diffM) * diffN; 
+            _forceVelocity = 4.0f * Mathf.Sqrt(diffM) * diffN;
             // Debug.Log($"{_mixedVelocity}, {velocity},{_forceVelocity}");
         }
 
@@ -323,18 +346,18 @@ public class KartPlayer : StrixBehaviour
         // 左右の矢印キーでステアリング
         float handle = 0.0f;
         if (Input.GetKey(KeyCode.LeftArrow))
-        { 
-        handle -= 1.0f;
+        {
+            handle -= 1.0f;
         }
-        if(Input.GetKey(KeyCode.RightArrow))
+        if (Input.GetKey(KeyCode.RightArrow))
         {
             handle += 1.0f;
         }
-        if(isCrashing)
+        if (isCrashing)
         {
             handle = 0.0f;
         }
-        if(handle == 0.0f)
+        if (handle == 0.0f)
         {
             _rotationSpeed *= 0.9f;
         }
@@ -348,7 +371,7 @@ public class KartPlayer : StrixBehaviour
         // Visual
         UpdateVisual(attr);
 
-         // Camera
+        // Camera
         UpdateCamera();
 
         UpdateLap();
@@ -356,14 +379,14 @@ public class KartPlayer : StrixBehaviour
         // ラップの処理
         int sectionIndex;
         float rationInSection, ratioOfAll;
-        if(KartCource.instance.GetPercentOnCource(transform.position, out sectionIndex, out rationInSection, out ratioOfAll))
-        { 
+        if (KartCource.instance.GetPercentOnCource(transform.position, out sectionIndex, out rationInSection, out ratioOfAll))
+        {
             // 周回陛下判定（スタートラインを横切ったかどうか）
-            if(_sectionIndex == KartCource.instance.sectionCount - 1 && sectionIndex == 0) 
+            if (_sectionIndex == KartCource.instance.sectionCount - 1 && sectionIndex == 0)
             {
                 _lapCount++;
             }
-            else if(_sectionIndex == 0 && sectionIndex == KartCource.instance.sectionCount - 1)
+            else if (_sectionIndex == 0 && sectionIndex == KartCource.instance.sectionCount - 1)
             {
                 _lapCount--;
             }
@@ -408,7 +431,7 @@ public class KartPlayer : StrixBehaviour
             if (_sectionIndex == KartCource.instance.sectionCount - 1 && sectionIndex == 0)
             {
                 _lapCount++;
-                if(_lapCount > 1 /* ゴールまでの周回数 */&& _syncGoalTimMsec == 0)
+                if (_lapCount > 1 /* ゴールまでの周回数 */&& _syncGoalTimMsec == 0)
                 {
                     // ゴール！
                     _syncGoalTimMsec = KartTask.instance.currentRaceTimeMsec; // 現在の時間(msec)をゴールした時間として記録
@@ -464,31 +487,31 @@ public class KartPlayer : StrixBehaviour
     /// </summary>
     private void ChangeAvatar()
     {
-        
+
         var avatartInfoList = AvatarSelecter.instance.avatartInfoList;
 
         //値が変化していない　または　値が無効な場合　なにもしない
-        if(_syncSelectedAvatartIndex == _currentAvatarIndex || _syncSelectedAvatartIndex < 0 || avatartInfoList.Length <= _syncSelectedAvatartIndex)
+        if (_syncSelectedAvatartIndex == _currentAvatarIndex || _syncSelectedAvatartIndex < 0 || avatartInfoList.Length <= _syncSelectedAvatartIndex)
         {
             return;
         }
 
         // 更新
         _currentAvatarIndex = _syncSelectedAvatartIndex;
-　
-            // デフォを削除
-            if(_avatar != null)
-             {
-                GameObject.Destroy(_avatar);
-                _avatar = null;
-            }
+
+        // デフォを削除
+        if (_avatar != null)
+        {
+            GameObject.Destroy(_avatar);
+            _avatar = null;
+        }
 
         var avatarPrefab = avatartInfoList[_currentAvatarIndex].avatartPrefab; // 選択したアバターのインデック
         _avatar = GameObject.Instantiate(avatarPrefab, avatarRoot, false); // Prefab生成
 
         // VRM (アニメーター情報取得)
         Animator animator = _avatar.GetComponentInChildren<Animator>(); // アバターからアニメータ～を取得
-        if(animator == null)
+        if (animator == null)
         {
             // アニメーターがなければVRMじゃない
             return;
@@ -506,7 +529,7 @@ public class KartPlayer : StrixBehaviour
         AvatarSelecter.CopyPose(baseAnimator, animator);
 
         GameObject.Destroy(baseObj);
-        
+
     }
 
     #region RPC
@@ -514,7 +537,7 @@ public class KartPlayer : StrixBehaviour
     public void UseItem(KartItem.eType itemType)
     {
         // RPC(全員に送る) アイテムを使うたび、１ずつ加算される
-        RpcToAll(nameof(UseItemRPC), KartItemManager.localItemInstanceIndex++, itemType, KartTask.instance.currentRaceTimeMsec, 
+        RpcToAll(nameof(UseItemRPC), KartItemManager.localItemInstanceIndex++, itemType, KartTask.instance.currentRaceTimeMsec,
             transform.position, 25.0f * transform.forward); // ⇦25 m/s で前方に発射
     }
 
@@ -529,6 +552,22 @@ public class KartPlayer : StrixBehaviour
     }
     #endregion
 
+
+    /// <summary>
+    /// アイテムを削除
+    /// </summary>
+    /// <param name="ownerId"></param>
+    /// <param name="instanceIndex"></param>
+    public void DestroyItem(long ownerId, int instanceIndex)
+    {
+        // RPC(全員に送る)
+        RpcToAll("DestroyItemRpc", ownerId, instanceIndex);
+    }
+    [StrixRpc]
+    private void DestroyItemRpc(long ownerId ,int instanceIndex)
+    {
+        KartItemManager.instance.DestroyItem(ownerId, instanceIndex);
+    }
 
     #region
     /// <summary>
