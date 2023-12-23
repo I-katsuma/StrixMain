@@ -12,4 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 245893209, guid: f2c2112f638c5b8489d16403d930373b, type: 3}
   m_Name: StrixReplicatorSettings
   m_EditorClassIdentifier: 
-  replicators: []
+  replicators:
+  - {fileID: 3046582687146442927, guid: 6cf57a7f29026c046914b213f4064d4b, type: 3}
+  - {fileID: 3046582687146442927, guid: e8680945b162ad443801498fc154167d, type: 3}
+  - {fileID: 3046582687146442927, guid: 140bb50d4471d2147a7ff352edab96df, type: 3}

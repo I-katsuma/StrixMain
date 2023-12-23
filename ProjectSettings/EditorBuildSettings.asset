@@ -9,6 +9,6 @@ EditorBuildSettings:
     path: Assets/Scenes/Title.unity
     guid: 7ee57d47b9a1b344eb643bf597f8867c
   - enabled: 1
-    path: Assets/Scenes/Daifugo.unity
-    guid: a047163499e48e540ba4493335e08a56
+    path: Assets/Scenes/Kart.unity
+    guid: bfc5c61bcf69752449c9f0be340191b7
   m_configObjects: {}

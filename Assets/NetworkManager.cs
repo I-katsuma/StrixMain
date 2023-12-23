@@ -162,7 +162,7 @@ public class NetworkManager : MonoBehaviour
     {
         Debug.Log("OnConnected");
 
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Daifugo");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Kart");
     }
 
     private void OnFailed()
