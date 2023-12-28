@@ -13,6 +13,7 @@ public class KartItem : MonoBehaviour
         None,
 
         Bullet,
+        Bomb,
 
         Max
     }

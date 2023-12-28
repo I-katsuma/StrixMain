@@ -46,8 +46,8 @@ public class KartPlayer : StrixBehaviour
     private GameObject _avatar = null;
 
     //Crash
-    private float _crashTimer = 0.0f;
-    private bool isCrashing => (_crashTimer > 0.0f);
+    private float _crashTimer = 0.0f; // クラッシュしている時間
+    private bool isCrashing => (_crashTimer > 0.0f); // クラッシュタイマーが0より大きければ、クラッシュしている
 
     // 同期情報
     [StrixSyncField] private int _syncState = 0;
@@ -232,6 +232,11 @@ public class KartPlayer : StrixBehaviour
             {
                 UseItem(KartItem.eType.Bullet);
             }
+
+            if (Input.GetKeyDown(KeyCode.X))
+            {
+                UseItem(KartItem.eType.Bomb);
+            }
         }
 
         if (_syncSelectedAvatartIndex != _currentAvatarIndex)
@@ -282,7 +287,7 @@ public class KartPlayer : StrixBehaviour
     private void FixedUpdate()
     {
         // クラッシュ処理
-        _crashTimer = Mathf.Max(_crashTimer - Time.fixedDeltaTime, 0.0f);
+        _crashTimer = Mathf.Max(_crashTimer - Time.fixedDeltaTime, 0.0f); // 3つ目はしきい値。0未満にはならない
 
         KartCource.eAttribute attr = KartCource.instance.GetAttribute(transform.position);
         bool isDart = (attr == KartCource.eAttribute.Dart);
@@ -395,7 +400,7 @@ public class KartPlayer : StrixBehaviour
         }
     }
 
-    private void UpdateVisual(KartCource.eAttribute attr)
+    private void UpdateVisual(KartCource.eAttribute attr) // 見た目の処理
     {
         bool isDart = (attr == KartCource.eAttribute.Dart);
 
@@ -408,7 +413,7 @@ public class KartPlayer : StrixBehaviour
         KartRoot.transform.localPosition = new Vector3(0.0f, ((_speed >= 1.0f) ? (Random.Range(-swing, swing) * ratio) : 0.0f), 0.0f);
 
         float angle = _rotationSpeed * 0.1f;
-        angle += _crashTimer * _crashTimer * 360.0f;
+        angle += _crashTimer * _crashTimer * 360.0f; // クラッシュタイマーの二乗
         KartRoot.transform.localEulerAngles = new Vector3(0.0f, angle, 0.0f);
     }
 
@@ -538,7 +543,7 @@ public class KartPlayer : StrixBehaviour
     {
         // RPC(全員に送る) アイテムを使うたび、１ずつ加算される
         RpcToAll(nameof(UseItemRPC), KartItemManager.localItemInstanceIndex++, itemType, KartTask.instance.currentRaceTimeMsec,
-            transform.position, 25.0f * transform.forward); // ⇦25 m/s で前方に発射
+            transform.position, 15.0f * transform.forward); // ⇦25 m/s で前方に発射
     }
 
     [StrixRpc]
@@ -575,7 +580,7 @@ public class KartPlayer : StrixBehaviour
     /// </summary>
     public void StartCrash()
     {
-        // 全員に送る
+        // 全員に送るRPC
         RpcToAll(nameof(StartCrashRpc));
     }
 

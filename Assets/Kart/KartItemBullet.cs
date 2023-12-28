@@ -27,7 +27,7 @@ public class KartItemBullet : KartItem
         // アイテムが発射されて何秒経過したか
         float pastTime = pastTimeF;
         // 10秒経ったら弾が消える
-        if (pastTime >= 10.0f && _ownerId == KartPlayer.localPlayer.id) // ⇦自分自身が発射した弾かどうか
+        if (pastTime >= 5.0f && _ownerId == KartPlayer.localPlayer.id) // ⇦自分自身が発射した弾かどうか
         {
             // 時間がたった弾を消す
             DestroyItem();

@@ -2105,6 +2105,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   kartItemBullet: {fileID: 6239615415217488887, guid: 7216b27dee6f21e4f9fc8ba6c375624e, type: 3}
+  kartItemBomb: {fileID: 9009524229527646722, guid: 0d845c0068c5bd14a9670b3c080fc536, type: 3}
+  explosion: {fileID: 7512732276773523593, guid: a5af2be2aafa4f841813aa292069fe40, type: 3}
 --- !u!4 &1065821541
 Transform:
   m_ObjectHideFlags: 0
