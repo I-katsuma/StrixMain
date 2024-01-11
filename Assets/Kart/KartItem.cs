@@ -12,8 +12,12 @@ public class KartItem : MonoBehaviour
     {
         None,
 
-        Bullet,
-        Bomb,
+        Bullet, // 手裏剣
+        HomingBullet, // 追尾弾
+        Bomb, // 爆弾
+        Dash, // 加速
+        Invincible, // 無敵
+
 
         Max
     }
@@ -25,7 +29,7 @@ public class KartItem : MonoBehaviour
     protected Vector3 _useVelocity = Vector3.zero;
 
     //　発射されてからの時間(ゲームが始まってからの時間ーアイテムを使用した時間)
-    protected float pastTimeF => (KartTask.instance.currentRaceTimeMsec - _useTimeMsec) * 0.001f;// msec から secに変換
+    protected float pastTimeF => (KartTask.instance.currentRaceTimeMsec - _useTimeMsec) * 0.001f;//⇦ msec から secに変換
 
     public void DestroyItem()
     {

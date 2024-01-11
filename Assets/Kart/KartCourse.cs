@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class KartCource : MonoBehaviour
+public partial class KartCourse : MonoBehaviour
 {
 
     // コースの属性
@@ -12,18 +12,23 @@ public class KartCource : MonoBehaviour
 
         Road, // 道
         Dart, // ダート
+        Item, // アイテム
 
         Max
     };
 
     private const float SECTION_WIDTH = 24.0f; // 幅
 
+    public MeshRenderer meshRenderer = null;
+
+    public Transform prefabObjectRoot = null;
+
     public Texture2D attributeTexture = null;
     
-    public static KartCource instance = null;
+    public static KartCourse instance = null;
 
     // チェックPoint
-    public Transform CheckPointRoot = null;
+    public Transform checkPointRoot = null;
     private List<Transform> _checkPointList = new List<Transform>();
     private List<float> _checkPointIntervalList = new List<float>();
     private List<float> _checkPointTotalLengthlList = new List<float>();
@@ -35,19 +40,25 @@ public class KartCource : MonoBehaviour
     {
         instance = this;
 
-        GenerateCheckPoints();
+        // GenerateCheckPoints();
     }
 
     // Start is called before the first frame update
     void Start()
     {
-
+        // 最初に走るコースをロード
+        LoadCourse(0);
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        // コース選択が選択されていればリロード
+        int raceCource = (int)KartTask.instance.raceCourse;
+        if(_courseIndex != raceCource)
+        {
+            LoadCourse(raceCource);
+        }
     }
 
     public eAttribute GetAttribute(Vector3 position)
@@ -57,24 +68,29 @@ public class KartCource : MonoBehaviour
 
         Color color = attributeTexture.GetPixel(pixelX, pixelY);
 
-        if(color.r < 0.5f)
+        if(color.r < 128/ 255.0f)
         {
             // ダートゾーン
             return eAttribute.Dart;
         }
+        else if(color.g < 205 / 255.0f)
+        {
+            // みち
+            return eAttribute.Road;
+        }
 
-        // 道
-        return eAttribute.Road;
+        // アイテム
+        return eAttribute.Item;
     }
 
     private void GenerateCheckPoints()
     {
         _totalLength = 0.0f;
 
-        int n = CheckPointRoot.childCount;
+        int n = checkPointRoot.childCount;
         for(int i = 0; i < n; i++)
         {
-            Transform checkPoint = CheckPointRoot.GetChild(i);
+            Transform checkPoint = checkPointRoot.GetChild(i);
             _checkPointList.Add(checkPoint);
             _checkPointIntervalList.Add(0.0f);
             _checkPointTotalLengthlList.Add(0.0f);

@@ -40,9 +40,11 @@ public class KartTask : MonoBehaviour // ゲームの流れを制御
     public Text rankingTextC= null;
     public Text rankingTextR = null;
     public Text rankingText = null;
+    public RawImage itemImage = null;
+    public Text[] itemCountTextList = null;
 
     public Transform playerRoot = null;
-    public KartPlayer plaeyrPrefab  = null;
+    public KartPlayer playerPrefab  = null;
     public  KartPlayer localPlayer = null;
 
     // ネットワーク関係
@@ -109,6 +111,7 @@ public class KartTask : MonoBehaviour // ゲームの流れを制御
         set { 
             SendCustomProperty("raceStartTick", value);
         }
+
     }
 
     /// <summary>
@@ -122,6 +125,21 @@ public class KartTask : MonoBehaviour // ゲームの流れを制御
         }
     }
 
+    /// <summary>
+    /// レースするコース
+    /// </summary>
+    public long raceCourse
+    {
+        get
+        {
+            return GetCustomProperties(nameof(raceCourse), 0L);
+        }
+        set
+        {
+            SendCustomProperty(nameof(raceCourse), value);
+        }
+    }
+
 
     // #16で消去
     // Player
@@ -131,6 +149,7 @@ public class KartTask : MonoBehaviour // ゲームの流れを制御
 
     void Awake()
     {
+        // ネットワークが初期化されていなければタイトルに遷移
         if (StrixNetwork.instance.room == null)
         {
             UnityEngine.SceneManagement.SceneManager.LoadScene("Title");
@@ -138,7 +157,7 @@ public class KartTask : MonoBehaviour // ゲームの流れを制御
         }
 
         // プレイヤー生成
-        localPlayer = GameObject.Instantiate<KartPlayer>(plaeyrPrefab);
+        localPlayer = GameObject.Instantiate<KartPlayer>(playerPrefab);
 
         instance = this;
     }
@@ -200,6 +219,14 @@ public class KartTask : MonoBehaviour // ゲームの流れを制御
         rankingTextC.text = rankingStrC ;
         rankingTextR.text = rankingStrR ;
         rankingText.text = GetRankText(myRank);
+
+        // Item
+        itemImage.texture = KartItemManager.instance.itemTextureList[(int)localPlayer.showItemType];
+        int itemCount = localPlayer.showItemCount;
+        for (int i = 0; i < itemCountTextList.Length; i++) 
+        {
+            itemCountTextList[i].text = (itemCount > 0) ? $"{itemCount}" : string.Empty; // アイテムを持っていたら所持数を表示
+        }
 
     }
 
@@ -277,5 +304,23 @@ public class KartTask : MonoBehaviour // ゲームの流れを制御
 
         //　終了
         yield break;
+    }
+
+    /// <summary>
+    /// コース選択ボタンが押された
+    /// </summary>
+    public void OnClickCourseSelectButton()
+    {
+        CourseSelector.instance.StartSelect((courseIndex/* 何番目のボタンか*/) =>
+        {
+            // 実際にボタンが押されたとき
+            if (courseIndex >= 0)
+            {
+                // コールの番号を設定
+                raceCourse = courseIndex;
+
+                
+            }
+        });
     }
 }

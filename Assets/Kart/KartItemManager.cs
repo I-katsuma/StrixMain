@@ -10,12 +10,14 @@ public class KartItemManager : MonoBehaviour
     public KartItem kartItemBullet = null; // 手裏剣のプレハブ
     public KartItem kartItemBomb = null;
     public Exprotion explosion = null; // 爆発プレハブ
+    public Texture[] itemTextureList = null; // アイテムのテクスチャ
 
     public static int localItemInstanceIndex = 0; // 自分自身が使うｱｲﾃﾑが次何番目か
 
+    // 何番目のアイテムなのかといった管理　 ⇓カートアイテムの特定 
     private Dictionary<long, Dictionary<int, KartItem>> _itemDic = new Dictionary<long, Dictionary<int, KartItem>>();  // <ownerId, <InstanceIndex, KartItem>>
 
-    public static KartItemManager instance;
+    public static KartItemManager instance = null;
 
     private void Awake()
     {
@@ -45,16 +47,19 @@ public class KartItemManager : MonoBehaviour
             case KartItem.eType.Bomb:
                 // 爆弾を生成
                 newItem = GameObject.Instantiate<KartItem>(kartItemBomb);
-                usePosition += 0.5f * Vector3.up; // 手裏剣の位置上方向に修正
+                usePosition += 0.5f * Vector3.up; // 位置上方向に修正
                 break;
 
             default: break;
         }
 
+        // 発射処理
         newItem.Setup(ownerId, instanceIndex, useTimeMsec, usePosition, useVelocity);
 
+        // 管理対象に加える
         if(!_itemDic.ContainsKey(ownerId))
         {
+            // キーがなければ生成する 空のディクショナリー
             _itemDic.Add(ownerId, new Dictionary<int, KartItem>());
         }
         _itemDic[ownerId].Add(instanceIndex, newItem);
@@ -63,9 +68,9 @@ public class KartItemManager : MonoBehaviour
     /// <summary>
     /// アイテムの削除
     /// </summary>
-    /// <param name="ownerId"></param>
-    /// <param name="instanceIndex"></param>
-    public void DestroyItem(long ownerId, int instanceIndex)
+    /// <param name="ownerId"></param> // 誰のアイテムを消すか
+    /// <param name="instanceIndex"></param> // 何番目のアイテムを消すか
+    public void DestroyItem(long ownerId, int instanceIndex) 
     {
         // 存在チェック
         if (_itemDic.ContainsKey(ownerId) && _itemDic[ownerId].ContainsKey(instanceIndex))

@@ -5,8 +5,6 @@ using UnityEngine;
 public class BillBoard : MonoBehaviour
 {
     // ビルボード　2D画面の正面を常にカメラに向ける処理
-
-
     // Start is called before the first frame update
     void Start()
     {

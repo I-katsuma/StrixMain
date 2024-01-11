@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using SoftGear.Strix.Unity.Runtime;
 using System.Xml.Linq;
 using Unity.VisualScripting;
+// using UnityEditor.Rendering;
 
 public class KartPlayer : StrixBehaviour
 {
@@ -13,7 +14,6 @@ public class KartPlayer : StrixBehaviour
     public Rigidbody myRigidBody = null;
 
     public Transform KartRoot = null;
-    //public Transform[] KartRoots = null;
 
     public Transform cameraLocator = null;
 
@@ -49,6 +49,17 @@ public class KartPlayer : StrixBehaviour
     private float _crashTimer = 0.0f; // クラッシュしている時間
     private bool isCrashing => (_crashTimer > 0.0f); // クラッシュタイマーが0より大きければ、クラッシュしている
 
+    // Item
+    private KartItem.eType _lotteryItemType = KartItem.eType.None; // 抽選中のアイテム
+    private KartItem.eType _ownItemType = KartItem.eType.None; // 所有しているアイテム
+    private int _ownItemCount = 0; // アイテム所持数
+    private Coroutine _itemLotteryCoroutine = null; // アイテム抽選用のコルーチン
+    private bool _isShowItem = true;
+                                                                            
+    // アイテムを外部に公開  _isShowItem = _ownItemType ⇦抽選いらないならこれだけでいい
+    public KartItem.eType showItemType => _isShowItem ? ((_lotteryItemType == KartItem.eType.None) ? _ownItemType : _lotteryItemType) : KartItem.eType.None;
+    public int showItemCount => (_lotteryItemType == KartItem.eType.None) ? _ownItemCount : 0;
+
     // 同期情報
     [StrixSyncField] private int _syncState = 0;
     [StrixSyncField] float _syncLapCountRatio = 0.0f;
@@ -66,7 +77,7 @@ public class KartPlayer : StrixBehaviour
     private static KartPlayer _localPlayer = null;
     public static KartPlayer localPlayer => _localPlayer;
     
-    private static Dictionary<long, KartPlayer> _playerDicById = new Dictionary<long, KartPlayer>();
+    private static Dictionary<long, KartPlayer> _playerDicById = new Dictionary<long, KartPlayer>(); // ※番目, Player
     private static Dictionary<GameObject, KartPlayer> _playerDicByGameObject = new Dictionary<GameObject, KartPlayer>();
 
 
@@ -122,7 +133,7 @@ public class KartPlayer : StrixBehaviour
             return 0;
         });
 
-        // Dic
+        // Dictionary管理
         _playerDicById.Clear();
         _playerDicByGameObject.Clear();
         foreach (var p in _playerList)
@@ -132,6 +143,7 @@ public class KartPlayer : StrixBehaviour
         }
     }
 
+    // コライダーからゲームオブジェクトをとってくる
     public static KartPlayer GetPlayerByGameObject(GameObject go)
     {
         if(_playerDicByGameObject.ContainsKey(go))
@@ -149,7 +161,7 @@ public class KartPlayer : StrixBehaviour
     private void OnDestroy() // 入室中プレイヤーリストから抜ける（ログアウトした）
     {
         // 登録解除
-        if (_localPlayer = this)
+        if (_localPlayer == this)
         {
             _localPlayer = null;
         }
@@ -228,6 +240,16 @@ public class KartPlayer : StrixBehaviour
             }
 
             // アイテム関係
+            if(_ownItemType != KartItem.eType.None && Input.GetKeyDown(KeyCode.Z))
+            {
+                UseItem(_ownItemType);
+                _ownItemCount--;
+                if(_ownItemCount <=0)
+                {
+                    _ownItemType = KartItem.eType.None;
+                }
+            }
+            /*
             if (Input.GetKeyDown(KeyCode.Z))
             {
                 UseItem(KartItem.eType.Bullet);
@@ -237,6 +259,7 @@ public class KartPlayer : StrixBehaviour
             {
                 UseItem(KartItem.eType.Bomb);
             }
+            */
         }
 
         if (_syncSelectedAvatartIndex != _currentAvatarIndex)
@@ -289,8 +312,8 @@ public class KartPlayer : StrixBehaviour
         // クラッシュ処理
         _crashTimer = Mathf.Max(_crashTimer - Time.fixedDeltaTime, 0.0f); // 3つ目はしきい値。0未満にはならない
 
-        KartCource.eAttribute attr = KartCource.instance.GetAttribute(transform.position);
-        bool isDart = (attr == KartCource.eAttribute.Dart);
+        KartCourse.eAttribute attr = KartCourse.instance.GetAttribute(transform.position);
+        bool isDart = (attr == KartCourse.eAttribute.Dart);
 
         // 他人の場合は行わない
         if (!isLocal)
@@ -373,6 +396,9 @@ public class KartPlayer : StrixBehaviour
         _rotation += _rotationSpeed * Time.fixedDeltaTime;
         myRigidBody.MoveRotation(Quaternion.Euler(0.0f, _rotation, 0.0f));
 
+        //  Item
+        UpdateItem(attr);
+
         // Visual
         UpdateVisual(attr);
 
@@ -384,14 +410,14 @@ public class KartPlayer : StrixBehaviour
         // ラップの処理
         int sectionIndex;
         float rationInSection, ratioOfAll;
-        if (KartCource.instance.GetPercentOnCource(transform.position, out sectionIndex, out rationInSection, out ratioOfAll))
+        if (KartCourse.instance.GetPercentOnCource(transform.position, out sectionIndex, out rationInSection, out ratioOfAll))
         {
             // 周回陛下判定（スタートラインを横切ったかどうか）
-            if (_sectionIndex == KartCource.instance.sectionCount - 1 && sectionIndex == 0)
+            if (_sectionIndex == KartCourse.instance.sectionCount - 1 && sectionIndex == 0)
             {
                 _lapCount++;
             }
-            else if (_sectionIndex == 0 && sectionIndex == KartCource.instance.sectionCount - 1)
+            else if (_sectionIndex == 0 && sectionIndex == KartCourse.instance.sectionCount - 1)
             {
                 _lapCount--;
             }
@@ -400,9 +426,68 @@ public class KartPlayer : StrixBehaviour
         }
     }
 
-    private void UpdateVisual(KartCource.eAttribute attr) // 見た目の処理
+    private void UpdateItem(KartCourse.eAttribute attr) // 見た目の処理
+    { 
+        if(attr == KartCourse.eAttribute.Item && _ownItemType == KartItem.eType.None && _lotteryItemType == KartItem.eType.None)
+        {
+            // マスを踏んだ かつ　アイテムを持ってない　かつ　アイテム抽選中ではない
+            if(_itemLotteryCoroutine != null)
+            {
+                // まだまわってるなら処理止める
+                StopCoroutine(_itemLotteryCoroutine);
+            }
+            _itemLotteryCoroutine = StartCoroutine(ItemLOtteryProc());
+
+        }
+    }
+
+    private  IEnumerator ItemLOtteryProc()
     {
-        bool isDart = (attr == KartCource.eAttribute.Dart);
+        float timer = 0.0f;
+        int lotteryCounter = -1;
+        
+        /* 演出部分*/
+        // 3秒経過かZキー押されるまで抽選
+        while (timer < 3.0f && !Input.GetKeyDown(KeyCode.Z))
+        {
+            // 抽選回数の間隔
+            int lotteryDest = (int)(timer / 0.1f /* 抽選間隔 */); // 10倍の速度で抽選
+            if(lotteryCounter < lotteryDest)
+            {
+                lotteryCounter = lotteryDest; // 変数上書き
+                _lotteryItemType = (KartItem.eType)Random.Range((int)KartItem.eType.None + 1, (int)KartItem.eType.Max); // ランダム抽選(演出上のもの)
+            }
+
+            yield return null;
+            timer += Time.deltaTime;
+        }
+        /*ここまで　演出いらないなら無くてもいい*/
+
+        _lotteryItemType = KartItem.eType.None;
+        _ownItemType = (KartItem.eType)Random.Range((int)KartItem.eType.None + 1, (int)KartItem.eType.Max); // ランダム抽選(確定)
+        _ownItemCount = Random.Range(2, 4 + 1);
+
+        // 点滅処理
+        timer = 0.0f;
+        while(timer < 1.2f)
+        {
+            float ratio = timer / 0.4f;
+            ratio = ratio - (int)ratio; // 小数点以下を抽出
+            _isShowItem = (ratio < 0.75f);
+
+            yield return null;
+            timer += Time.deltaTime;
+        }
+        _isShowItem = true;
+
+        // 終了
+        _itemLotteryCoroutine = null;
+        yield break;
+    }
+
+    private void UpdateVisual(KartCourse.eAttribute attr) // 見た目の処理
+    {
+        bool isDart = (attr == KartCourse.eAttribute.Dart);
 
         // 見た目の更新(ダートゾーンの処理)
         float swing = isDart ? 0.03f : 0.01f;
@@ -430,10 +515,10 @@ public class KartPlayer : StrixBehaviour
     {
         int sectionIndex;
         float rationInSection, ratioOfAll;
-        if (KartCource.instance.GetPercentOnCource(transform.position, out sectionIndex, out rationInSection, out ratioOfAll))
+        if (KartCourse.instance.GetPercentOnCource(transform.position, out sectionIndex, out rationInSection, out ratioOfAll))
         {
             // 周回経過判定（スタートラインを横切ったかどうか）
-            if (_sectionIndex == KartCource.instance.sectionCount - 1 && sectionIndex == 0)
+            if (_sectionIndex == KartCourse.instance.sectionCount - 1 && sectionIndex == 0)
             {
                 _lapCount++;
                 if (_lapCount > 1 /* ゴールまでの周回数 */&& _syncGoalTimMsec == 0)
@@ -442,7 +527,7 @@ public class KartPlayer : StrixBehaviour
                     _syncGoalTimMsec = KartTask.instance.currentRaceTimeMsec; // 現在の時間(msec)をゴールした時間として記録
                 }
             }
-            else if (_sectionIndex == 0 && sectionIndex == KartCource.instance.sectionCount - 1)
+            else if (_sectionIndex == 0 && sectionIndex == KartCourse.instance.sectionCount - 1)
             {
                 _lapCount--;
             }
@@ -466,7 +551,7 @@ public class KartPlayer : StrixBehaviour
         _mixedVelocity = Vector3.zero;
         myRigidBody.velocity = Vector3.zero;
         myRigidBody.angularVelocity = Vector3.zero;
-        _sectionIndex = KartCource.instance.sectionCount - 1;
+        _sectionIndex = KartCourse.instance.sectionCount - 1;
         _lapCount = 0;
         _syncLapCountRatio = 0.0f;
         _syncGoalTimMsec = 0;
@@ -474,7 +559,7 @@ public class KartPlayer : StrixBehaviour
 
         // プレイヤーの位置設定
         int thisPlayerIndex = _playerList.IndexOf(this); // 自分自身が何番目か調べる
-        myRigidBody.MovePosition(KartCource.instance.GetStartingPoint(thisPlayerIndex));
+        myRigidBody.MovePosition(KartCourse.instance.GetStartingPoint(thisPlayerIndex));
         myRigidBody.MoveRotation(Quaternion.identity);
 
         // State
@@ -514,6 +599,7 @@ public class KartPlayer : StrixBehaviour
         var avatarPrefab = avatartInfoList[_currentAvatarIndex].avatartPrefab; // 選択したアバターのインデック
         _avatar = GameObject.Instantiate(avatarPrefab, avatarRoot, false); // Prefab生成
 
+        // 以下、VRM使わないなら必要なし
         // VRM (アニメーター情報取得)
         Animator animator = _avatar.GetComponentInChildren<Animator>(); // アバターからアニメータ～を取得
         if (animator == null)
@@ -557,7 +643,6 @@ public class KartPlayer : StrixBehaviour
     }
     #endregion
 
-
     /// <summary>
     /// アイテムを削除
     /// </summary>
@@ -566,7 +651,7 @@ public class KartPlayer : StrixBehaviour
     public void DestroyItem(long ownerId, int instanceIndex)
     {
         // RPC(全員に送る)
-        RpcToAll("DestroyItemRpc", ownerId, instanceIndex);
+        RpcToAll(nameof(DestroyItemRpc), ownerId, instanceIndex);
     }
     [StrixRpc]
     private void DestroyItemRpc(long ownerId ,int instanceIndex)

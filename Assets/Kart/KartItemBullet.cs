@@ -32,7 +32,7 @@ public class KartItemBullet : KartItem
             // 時間がたった弾を消す
             DestroyItem();
         }
-        transform.position = _usePosition + pastTime * _useVelocity;
+        transform.position = _usePosition + pastTime * _useVelocity; // 発射された位置 + (時間 * 速度 = 位置)
 
     }
 
