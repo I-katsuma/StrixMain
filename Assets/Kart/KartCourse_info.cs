@@ -13,7 +13,7 @@ public partial class KartCourse : MonoBehaviour
 
     public string attributeTextureresourcePath => $"Kart/Course/{courseName}_attr"; // 属性テクスチャ
 
-    private GameObject _courceObject = null;
+    private GameObject _courseObject = null;
     private Texture2D _albedoTexture = null;
 
     /// <summary>
@@ -21,10 +21,10 @@ public partial class KartCourse : MonoBehaviour
     /// </summary>
     private void ReleseCource()
     {
-        if(_courceObject)
+        if(_courseObject)
         {
-            Destroy( _courceObject );
-            _courceObject = null;
+            Destroy( _courseObject );
+            _courseObject = null;
         }
         // チェックポイント開放
         _checkPointList.Clear();
@@ -47,8 +47,8 @@ public partial class KartCourse : MonoBehaviour
     
         // オブジェクトとチェックポイント
         var coursePrefab = Resources.Load<GameObject>(prefabResourcePath);
-        _courceObject = Instantiate<GameObject>(coursePrefab, prefabObjectRoot, false);
-        checkPointRoot = _courceObject.transform.Find("CheckPointRoot");
+        _courseObject = Instantiate<GameObject>(coursePrefab, prefabObjectRoot, false);
+        checkPointRoot = _courseObject.transform.Find("CheckPointRoot");
 
         // テクスチャ
         _albedoTexture = Resources.Load<Texture2D>(albedoTextureResourcePath);

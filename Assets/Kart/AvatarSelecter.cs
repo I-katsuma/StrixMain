@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class AvatarSelecter : MonoBehaviour
+public class AvatarSelecter : SelectorBase
 {
     /// <summary>
     /// アバター情報
@@ -16,9 +17,11 @@ public class AvatarSelecter : MonoBehaviour
     }
 
     public GameObject kartRidingVrmSase = null; // 座っている姿勢情報
-    public AvatarInfo[] avatartInfoList = null;
+    public AvatarInfo[] avatartInfoList = null; // 実際のアバター情報の配列
 
-    public static AvatarSelecter instance = null;
+    public override int buttonCount => avatartInfoList.Length; // ボタンの数
+
+    public static AvatarSelecter instance = null; // シングルトン
 
     private void Awake()
     {
@@ -28,16 +31,13 @@ public class AvatarSelecter : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
-    void Start()
+    protected override void SetupButton(SelectorButton button, int index)
     {
-        
-    }
+        // コース情報
+        var avatarInfo = avatartInfoList[index];
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        // ボタンの初期化
+        button.Initialze(this, index, avatarInfo.thumbnailTexure, avatarInfo.avatartname);
     }
 
     #region Util

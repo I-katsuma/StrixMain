@@ -323,4 +323,20 @@ public class KartTask : MonoBehaviour // ゲームの流れを制御
             }
         });
     }
+
+    /// <summary>
+    /// アバター選択ボタンが押された
+    /// </summary>
+    public void OnClickAvatarSelectButton()
+    {
+        AvatarSelecter.instance.StartSelect((avatarIndex/* 何番目のボタンか*/) =>
+        {
+            // 実際にボタンが押されたとき
+            if (avatarIndex >= 0)
+            {
+                localPlayer.syncSelectedAvatarIndex = avatarIndex;// isCloseSelected
+
+            }
+        });
+    }
 }
